@@ -1,23 +1,26 @@
 # Maintainer: Jon Sangster <jon@ertt.ca>
 
 pkgname=libsangster_atmega328p-git
-pkgver=0.1
+pkgver=0.2
 pkgrel=1
 pkgdesc='A blah blah blah'
-arch=('avr')
+depends=('avr-libc>=2.0.0')
+arch=('any')
 url="https://github.com/sangster/embedded-sangster_atmega328p"
 license=('LGPL')
 source=('libsangster_atmega328p-git::git+http://github.com/sangster/embedded-sangster_atmega328p#branch=master')
+md5sums=('SKIP')
 
 build() {
-  cd "$srcdir"/$pkgname-$pkgver
-  ./bootstrap.sh
-  ./configure --prefix=/usr --host=avr
+  export CFLAGS=
+  export LDFLAGS=
+  cd "$srcdir"/$pkgname
+  ./setup_build.sh
   make
 }
 
 package() {
-  cd "$srcdir"/$pkgname-$pkgver
+  cd "$srcdir"/$pkgname
   make DESTDIR="$pkgdir" install
 }
 
