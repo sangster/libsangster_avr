@@ -1,0 +1,39 @@
+PREFIX = __CONF_PREFIX__
+MCU    = __CONF_MCU__
+F_CPU  = __CONF_F_CPU__
+
+TARGET = libsangster_atmega328p.a
+
+CC    = avr-gcc
+AR    = avr-ar
+RM    = rm
+CP    = cp
+MKDIR = mkdir
+
+
+CFLAGS = -c -std=gnu99 -Os -Wall -Werror -ffunction-sections -fdata-sections \
+				 -mmcu=$(MCU) -DF_CPU=$(F_CPU)
+ARFLAGS = rcsv
+RMFLAGS = -rf
+CPFLAGS = -r
+MKDIRFLAGS = -p
+
+
+OBJECTS = $(patsubst %.c, %.o, $(wildcard *.c))
+HEADERS = $(wildcard *.h)
+
+all: $(TARGET)
+
+$(TARGET): $(OBJECTS)
+	$(AR) $(ARFLAGS) $@ $^
+
+install: $(TARGET) $(HEADERS)
+	$(CP) $(CPFLAGS) $(TARGET) $(PREFIX)/lib/$(TARGET)
+	$(MKDIR) $(MKDIRFLAGS) $(PREFIX)/include/sangster
+	$(CP) $(CPFLAGS) $(HEADERS) $(PREFIX)/include/sangster
+
+clean:
+	$(RM) $(RMFLAGS) $(TARGET) $(OBJECTS) Makefile *~
+
+%.o: %.c
+	$(CC) $(CFLAGS) -o $@ $^
