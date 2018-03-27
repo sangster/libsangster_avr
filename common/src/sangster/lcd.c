@@ -1,5 +1,5 @@
 /*
- *  "ATMega328/p Library" is a library of common ATmega328/p functionality.
+ *  "libsangster_avr_common" is a library of common AVR functionality.
  *  Copyright (C) 2018  Jon Sangster
  *
  *  This program is free software: you can redistribute it and/or modify it
@@ -34,9 +34,7 @@ extern void lcd_print_P(const Lcd*, const char*);
 extern void lcd_reprint_P(const Lcd*, const char*);
 
 
-/**
- * The default
- */
+/** The default LcdWrite4 implementation. */
 static void default_lcd_write4(const Lcd* lcd, const uint8_t nibble)
 {
     for (uint8_t i = 0; i < 4; ++i) {
@@ -74,7 +72,7 @@ void lcd_begin(Lcd* lcd, uint8_t rows, uint8_t dot_size)
     }
 
     // 40+ ms warm-up time
-    _delay_ms(100);
+    _delay_ms(50);
 
     if (!(lcd->display_function & LCD_MODE_8BIT)) {
         // 4 bit mode, see figure 24 from HD44780.PDF

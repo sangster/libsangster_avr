@@ -1,4 +1,4 @@
-# Sangster's ATMega328P Library
+# Sangster's AVR Library
 
 This library provides helpful code for developing toy projects with the
 [ATmega328P AVR

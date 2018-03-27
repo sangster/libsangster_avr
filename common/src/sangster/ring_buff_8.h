@@ -1,7 +1,7 @@
 #ifndef SANGSTER_RING_BUFF_H
 #define SANGSTER_RING_BUFF_H
 /*
- *  "ATMega328/p Library" is a library of common ATmega328/p functionality.
+ *  "libsangster_avr_common" is a library of common AVR functionality.
  *  Copyright (C) 2018  Jon Sangster
  *
  *  This program is free software: you can redistribute it and/or modify it

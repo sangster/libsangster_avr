@@ -1,5 +1,5 @@
 /*
- *  "ATMega328/p Library" is a library of common ATmega328/p functionality.
+ *  "libsangster_avr_common" is a library of common AVR functionality.
  *  Copyright (C) 2018  Jon Sangster
  *
  *  This program is free software: you can redistribute it and/or modify it
@@ -15,3 +15,10 @@
  *  You should have received a copy of the GNU General Public License along
  *  with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+#include "usart_p.h"
+
+uint16_t usart_read_uint16_P(PGM_P prompt, uint8_t len, const uint16_t min,
+                             const uint16_t max)
+{
+    return __usart_read_uint16(prompt, len, min, max, usart_print_P);
+}
