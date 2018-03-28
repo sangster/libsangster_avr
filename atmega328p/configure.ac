@@ -7,12 +7,11 @@ m4_define([SANGSTER_F_CPU], 16000000L)
 
 # Initialize autoconf & automake.
 AC_PREREQ(2.65)
-AC_INIT([libsangster_avr_common], [SANGSTER_MAJOR.SANGSTER_MINOR.SANGSTER_PATCH], [])
+AC_INIT([libsangster_avr_atmega328p], [SANGSTER_MAJOR.SANGSTER_MINOR.SANGSTER_PATCH], [])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([build-aux])
 AM_INIT_AUTOMAKE([1.9 foreign])
 AC_PREFIX_DEFAULT("/usr/avr")
-# AC_CONFIG_HEADERS([config.h])
 
 # Define macro variables for the package version numbers.
 AC_DEFINE(SANGSTER_VERSION_MAJOR, SANGSTER_MAJOR, [Define the major version number.])
@@ -28,6 +27,7 @@ AC_SUBST(SANGSTER_LT_RELEASE)
 AC_SUBST(SANGSTER_LT_CURRENT)
 AC_SUBST(SANGSTER_LT_REVISION)
 
+LT_INIT([static])
 
 MCU=SANGSTER_MCU
 F_CPU=SANGSTER_F_CPU
@@ -38,14 +38,11 @@ AC_DEFINE(F_CPU, SANGSTER_F_CPU)
 
 # Checks for programs.
 AC_PROG_CC([avr-gcc])
-AC_PROG_CC_C99
+AC_PROG_CC_STDC
 AC_PROG_INSTALL
-AC_PROG_LIBTOOL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
-AC_PROG_RANLIB
-
-LT_INIT([static])
+AC_PROG_LIBTOOL
 
 # Doxygen
 AC_CHECK_PROGS([DOXYGEN], [doxygen])
@@ -62,8 +59,19 @@ AC_TYPE_UINT16_T
 AC_TYPE_INT16_T
 AC_TYPE_UINT32_T
 
+PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/avr/lib/pkgconfig
+export PKG_CONFIG_PATH
+
+# PKG_INSTALLDIR([/usr/avr/lib/pkgconfig])
+PKG_CHECK_MODULES([COMMON], [libsangster_avr_common-1.0 >= 1.0], [],
+              AC_MSG_ERROR([Could not find AVR Common lib]);
+)
+# AC_CHECK_LIB([sangster_avr_common], [twi_handle_vect], [], [
+#               AC_MSG_ERROR([Could not find AVR Common lib]);
+# ]);
+
 # Define Makefiles.
-AC_CONFIG_FILES([libsangster_avr_common-1.0.pc src/Makefile docs/Makefile Makefile])
+AC_CONFIG_FILES([libsangster_avr_atmega328p-1.0.pc src/Makefile docs/Makefile Makefile])
 AM_COND_IF([HAVE_DOXYGEN], [AC_CONFIG_FILES([docs/Doxyfile])])
 
 # Generate the "configure" script.

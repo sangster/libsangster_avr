@@ -91,7 +91,12 @@ build_triplet = @build@
 host_triplet = @host@
 subdir = src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/configure.ac
+am__aclocal_m4_deps = $(top_srcdir)/build-aux/libtool.m4 \
+	$(top_srcdir)/build-aux/ltoptions.m4 \
+	$(top_srcdir)/build-aux/ltsugar.m4 \
+	$(top_srcdir)/build-aux/ltversion.m4 \
+	$(top_srcdir)/build-aux/lt~obsolete.m4 \
+	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 DIST_COMMON = $(srcdir)/Makefile.am $(nobase_include_HEADERS) \
@@ -133,10 +138,10 @@ AM_V_AR = $(am__v_AR_@AM_V@)
 am__v_AR_ = $(am__v_AR_@AM_DEFAULT_V@)
 am__v_AR_0 = @echo "  AR      " $@;
 am__v_AR_1 = 
-libsangster_@MCU@_a_AR = $(AR) $(ARFLAGS)
-libsangster_@MCU@_a_LIBADD =
+libsangster_avr_common_a_AR = $(AR) $(ARFLAGS)
+libsangster_avr_common_a_LIBADD =
 am__dirstamp = $(am__leading_dot)dirstamp
-am_libsangster_@MCU@_a_OBJECTS = sangster/lcd.$(OBJEXT) \
+am_libsangster_avr_common_a_OBJECTS = sangster/lcd.$(OBJEXT) \
 	sangster/ring_buff_8.$(OBJEXT) sangster/rtc_1307.$(OBJEXT) \
 	sangster/sd.$(OBJEXT) sangster/sd/sd_card.$(OBJEXT) \
 	sangster/sd/sd_file.$(OBJEXT) \
@@ -146,10 +151,9 @@ am_libsangster_@MCU@_a_OBJECTS = sangster/lcd.$(OBJEXT) \
 	sangster/sd/sd_file__time.$(OBJEXT) \
 	sangster/sd/sd_file__write.$(OBJEXT) \
 	sangster/sd/sd_volume.$(OBJEXT) sangster/sonar.$(OBJEXT) \
-	sangster/timer0.$(OBJEXT) sangster/twi.$(OBJEXT) \
-	sangster/usart.$(OBJEXT) sangster/usart_p.$(OBJEXT) \
 	sangster/util.$(OBJEXT)
-libsangster_@MCU@_a_OBJECTS = $(am_libsangster_@MCU@_a_OBJECTS)
+libsangster_avr_common_a_OBJECTS =  \
+	$(am_libsangster_avr_common_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -163,7 +167,7 @@ am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
 am__v_at_0 = @
 am__v_at_1 = 
 DEFAULT_INCLUDES = -I.@am__isrc@
-depcomp = $(SHELL) $(top_srcdir)/depcomp
+depcomp = $(SHELL) $(top_srcdir)/build-aux/depcomp
 am__depfiles_maybe = depfiles
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
@@ -188,8 +192,8 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(libsangster_@MCU@_a_SOURCES)
-DIST_SOURCES = $(libsangster_@MCU@_a_SOURCES)
+SOURCES = $(libsangster_avr_common_a_SOURCES)
+DIST_SOURCES = $(libsangster_avr_common_a_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -215,7 +219,8 @@ am__define_uniq_tagged_files = \
   done | $(am__uniquify_input)`
 ETAGS = etags
 CTAGS = ctags
-am__DIST_COMMON = $(srcdir)/Makefile.in $(top_srcdir)/depcomp
+am__DIST_COMMON = $(srcdir)/Makefile.in \
+	$(top_srcdir)/build-aux/depcomp
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
@@ -243,6 +248,7 @@ ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 EXEEXT = @EXEEXT@
 FGREP = @FGREP@
+F_CPU = @F_CPU@
 GREP = @GREP@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
@@ -342,30 +348,25 @@ OPT_OPTIMS = -Os -ffunction-sections -fdata-sections -mrelax
 OPT_WARN = -Wall -pedantic -Wextra -Wmissing-declarations \
 	-Wmissing-field-initializers -Wsystem-headers \
 	-Wno-variadic-macros
-AM_CFLAGS = -I$(top_srcdir)/include -static -Wall -mmcu=@MCU@ $(OPT_OPTIMS) $(OPT_WARN)
-lib_LIBRARIES = libsangster_@MCU@.a
-libsangster_@MCU@_a_SOURCES = sangster/lcd.c \
-                               sangster/ring_buff_8.c \
-                               sangster/rtc_1307.c \
-                               sangster/sd.c \
-                               sangster/sd/sd_card.c \
-                               sangster/sd/sd_file.c \
-                               sangster/sd/sd_file__dir.c \
-                               sangster/sd/sd_file__open.c \
-                               sangster/sd/sd_file__remove.c \
-                               sangster/sd/sd_file__time.c \
-                               sangster/sd/sd_file__write.c \
-                               sangster/sd/sd_volume.c \
-                               sangster/sonar.c \
-                               sangster/timer0.c \
-                               sangster/twi.c \
-                               sangster/usart.c \
-                               sangster/usart_p.c \
-                               sangster/util.c
+AM_CFLAGS = -I$(top_srcdir)/include -static -Wall -mmcu=$(MCU) $(OPT_OPTIMS) $(OPT_WARN)
+lib_LIBRARIES = libsangster_avr_common.a
+libsangster_avr_common_a_SOURCES = sangster/lcd.c \
+                                   sangster/ring_buff_8.c \
+                                   sangster/rtc_1307.c \
+                                   sangster/sd.c \
+                                   sangster/sd/sd_card.c \
+                                   sangster/sd/sd_file.c \
+                                   sangster/sd/sd_file__dir.c \
+                                   sangster/sd/sd_file__open.c \
+                                   sangster/sd/sd_file__remove.c \
+                                   sangster/sd/sd_file__time.c \
+                                   sangster/sd/sd_file__write.c \
+                                   sangster/sd/sd_volume.c \
+                                   sangster/sonar.c \
+                                   sangster/util.c
 
 nobase_include_HEADERS = sangster/lcd.h \
                          sangster/lcd_charmap.h \
-                         sangster/led_builtin.h \
                          sangster/pinout.h \
                          sangster/ring_buff_8.h \
                          sangster/rtc_1307.h \
@@ -376,16 +377,8 @@ nobase_include_HEADERS = sangster/lcd.h \
                          sangster/sd/sd_file.h \
                          sangster/sd/sd_volume.h \
                          sangster/sonar.h \
-                         sangster/timer0.h \
-                         sangster/twi.h \
-                         sangster/usart.h \
-                         sangster/usart_p.h \
                          sangster/util.h
 
-
-# TODO: How to do this with a static library?
-# libsangster_m328p_a_LDFLAGS = -no-undefined -release $(SANGSTER_LT_RELEASE) \
-#                               -version-info $(SANGSTER_LT_CURRENT):$(SANGSTER_LT_REVISION):$(SANGSTER_LT_AGE)
 DISTCLEANFILES = Makefile.in
 all: all-am
 
@@ -489,21 +482,13 @@ sangster/sd/sd_volume.$(OBJEXT): sangster/sd/$(am__dirstamp) \
 	sangster/sd/$(DEPDIR)/$(am__dirstamp)
 sangster/sonar.$(OBJEXT): sangster/$(am__dirstamp) \
 	sangster/$(DEPDIR)/$(am__dirstamp)
-sangster/timer0.$(OBJEXT): sangster/$(am__dirstamp) \
-	sangster/$(DEPDIR)/$(am__dirstamp)
-sangster/twi.$(OBJEXT): sangster/$(am__dirstamp) \
-	sangster/$(DEPDIR)/$(am__dirstamp)
-sangster/usart.$(OBJEXT): sangster/$(am__dirstamp) \
-	sangster/$(DEPDIR)/$(am__dirstamp)
-sangster/usart_p.$(OBJEXT): sangster/$(am__dirstamp) \
-	sangster/$(DEPDIR)/$(am__dirstamp)
 sangster/util.$(OBJEXT): sangster/$(am__dirstamp) \
 	sangster/$(DEPDIR)/$(am__dirstamp)
 
-libsangster_@MCU@.a: $(libsangster_@MCU@_a_OBJECTS) $(libsangster_@MCU@_a_DEPENDENCIES) $(EXTRA_libsangster_@MCU@_a_DEPENDENCIES) 
-	$(AM_V_at)-rm -f libsangster_@MCU@.a
-	$(AM_V_AR)$(libsangster_@MCU@_a_AR) libsangster_@MCU@.a $(libsangster_@MCU@_a_OBJECTS) $(libsangster_@MCU@_a_LIBADD)
-	$(AM_V_at)$(RANLIB) libsangster_@MCU@.a
+libsangster_avr_common.a: $(libsangster_avr_common_a_OBJECTS) $(libsangster_avr_common_a_DEPENDENCIES) $(EXTRA_libsangster_avr_common_a_DEPENDENCIES) 
+	$(AM_V_at)-rm -f libsangster_avr_common.a
+	$(AM_V_AR)$(libsangster_avr_common_a_AR) libsangster_avr_common.a $(libsangster_avr_common_a_OBJECTS) $(libsangster_avr_common_a_LIBADD)
+	$(AM_V_at)$(RANLIB) libsangster_avr_common.a
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -518,10 +503,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@sangster/$(DEPDIR)/rtc_1307.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@sangster/$(DEPDIR)/sd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@sangster/$(DEPDIR)/sonar.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@sangster/$(DEPDIR)/timer0.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@sangster/$(DEPDIR)/twi.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@sangster/$(DEPDIR)/usart.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@sangster/$(DEPDIR)/usart_p.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@sangster/$(DEPDIR)/util.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@sangster/sd/$(DEPDIR)/sd_card.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@sangster/sd/$(DEPDIR)/sd_file.Po@am__quote@

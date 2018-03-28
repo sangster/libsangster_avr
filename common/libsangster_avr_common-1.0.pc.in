@@ -3,8 +3,8 @@ exec_prefix=@exec_prefix@
 includedir=@includedir@
 libdir=@libdir@
 
-Name: LibSangster_atmega328p
-Description: Library of atmega328p
+Name: LibSangster AVR Common
+Description: Library of common AVR functionality
 Version: @PACKAGE_VERSION@
 Cflags: -I${includedir}
-Libs: -L${libdir} -lsangster_atmega328p
+Libs: -L${libdir} -lsangster_avr_common

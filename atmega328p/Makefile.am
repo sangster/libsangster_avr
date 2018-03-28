@@ -1,7 +1,7 @@
 SUBDIRS = src docs .
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = libsangster_avr_common-1.0.pc
+pkgconfig_DATA = libsangster_avr_atmega328p-1.0.pc
 
 
 .PHONY: setup_build
