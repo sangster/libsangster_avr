@@ -1,23 +1,22 @@
 #ifndef SANGSTER_USART_H
 #define SANGSTER_USART_H
 /*
- *  "libsangster_avr_common" is a library of common AVR functionality.
- *  Copyright (C) 2018  Jon Sangster
+ * "libsangster_avr" is a library of common AVR functionality.
+ * Copyright (C) 2018  Jon Sangster
  *
- *  This program is free software: you can redistribute it and/or modify it
- *  under the terms of the GNU General Public License as published by the Free
- *  Software Foundation, either version 3 of the License, or (at your option)
- *  any later version.
+ * This program is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option)
+ * any later version.
  *
- *  This program is distributed in the hope that it will be useful, but WITHOUT
- *  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- *  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
- *  more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
  *
- *  You should have received a copy of the GNU General Public License along
- *  with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <https://www.gnu.org/licenses/>.
  */
-
 /**
  * @file
  *
@@ -35,6 +34,9 @@
 #include "sangster/util.h"
 
 
+/*******************************************************************************
+ * Definitions
+ ******************************************************************************/
 #define UTIL_16_BIT_DIGIT_WIDTH 6
 
 #ifndef BAUD_TOL
@@ -42,17 +44,23 @@
 #endif//BAUD_TOL
 
 
+/*******************************************************************************
+ * Types
+ ******************************************************************************/
 enum usart_frame_format
 {
     /// 8 bit, No parity bit, 1 stop
-    FORMAT_8N1 = (_BV(UCSZ00) | _BV(UCSZ01)) & ~(_BV(USBS0)),
+    FORMAT_8N1 = (_BV(UCSZ00) | _BV(UCSZ01)) & ~_BV(USBS0),
 
     /// 8 bit, No parity bit, 2 stops
-    FORMAT_8N2 = (_BV(UCSZ00) | _BV(UCSZ01) | _BV(USBS0))
+    FORMAT_8N2 = _BV(UCSZ00) | _BV(UCSZ01) | _BV(USBS0),
 };
 typedef enum usart_frame_format UsartFrameFormat;
 
 
+/*******************************************************************************
+ * Function Declarations
+ ******************************************************************************/
 /**
  * Opens an IO connection to a serial device.
  *
@@ -61,6 +69,111 @@ typedef enum usart_frame_format UsartFrameFormat;
  * @param format The format of the connection. The serial device must be
  * configured with the same parameters.
  */
+SA_FUNC void usart_init(uint16_t baud, UsartFrameFormat);
+
+/// @return the next character received
+SA_INLINE uint8_t usart_recv();
+
+/**
+ * Prints a character.
+ *
+ * @param ch The character to transmit on serial line.
+ */
+SA_FUNC void usart_send(uint8_t);
+
+/**
+ * Read at most @a n characters.
+ *
+ * @return the number of characters read
+ */
+SA_FUNC size_t usart_recvn(uint8_t*, size_t, bool);
+
+/// Prints a string to the serial connection
+SA_INLINE inline void usart_print(char const*);
+
+/// Prints the string representation of the given `uint8_t`
+SA_FUNC void usart_8(uint8_t);
+
+/// Prints the string representation of the given `uint16_t`
+SA_FUNC void usart_16(uint16_t);
+
+/// Prints the string representation of the given `uint32_t`
+SA_FUNC void usart_32(uint32_t);
+
+/// Prints a hexidecimal string representation of the given `uint8_t`
+SA_FUNC void usart_hex_8(uint8_t);
+
+/// Prints a hexidecimal string representation of the given `uint16_t`
+SA_FUNC void usart_hex_16(uint16_t);
+
+/// Prints a hexidecimal string representation of the given `uint32_t`
+SA_FUNC void usart_hex_32(uint32_t);
+
+/// Prints a binary string representation of the given `uint8_t`
+SA_FUNC void usart_bin_8(uint8_t);
+
+/// Prints a binary string representation of the given `uint16_t`
+SA_FUNC void usart_bin_16(uint16_t);
+
+/// Prints a binary string representation of the given `uint32_t`
+SA_FUNC void usart_bin_32(uint32_t);
+
+/// Prints a `CRLF`
+SA_INLINE void usart_crlf();
+
+/// Prints the given text, followed by a `CRLF`
+SA_INLINE void usart_println(char const*);
+
+SA_FUNC int usart_stream_recv(__attribute__((unused)) FILE*);
+
+SA_FUNC int usart_stream_send(char, __attribute__((unused)) FILE*);
+
+/**
+ * Configures `STDOUT` to write to USART.
+ *
+ * @note Using some standard `stdio.h` functions may seriously bloat your
+ *   binary.
+ */
+SA_INLINE void usart_setup_stdout();
+
+/**
+ * Configures `STDIN` to read from USART.
+ *
+ * @note Using some standard `stdio.h` functions may seriously bloat your
+ *   binary.
+ */
+SA_INLINE void usart_setup_stdin();
+
+/**
+ * Configures `STDIN` and `STDOUT` to read and write to USART.
+ *
+ * @note Using some standard `stdio.h` functions may seriously bloat your
+ *   binary.
+ */
+SA_INLINE void usart_setup_streams();
+
+SA_INLINE uint8_t usart_is_recv_ready();
+
+SA_FUNC uint16_t __usart_read_uint16(char const* prompt, uint8_t len,
+                                     uint16_t min, uint16_t max,
+                                     void (*prompt_print)(const char*));
+
+/**
+ * Prompt the user to enter a number, enforcing a min and max value.
+ */
+SA_FUNC uint16_t usart_read_uint16(char const*, uint8_t len,
+                                   uint16_t min, uint16_t max);
+
+/**
+ * Print out the given array of bytes, in hex, binary, decimal, and (if
+ * applicable) ASCII formats.
+ */
+SA_FUNC void usart_dump_array_8(uint8_t*, size_t);
+
+
+/*******************************************************************************
+ * Function Definitions
+ ******************************************************************************/
 SA_FUNC void usart_init(const uint16_t baud, const UsartFrameFormat format)
 {
     // TODO: is uint32_t too wide?
@@ -88,7 +201,6 @@ SA_FUNC void usart_init(const uint16_t baud, const UsartFrameFormat format)
 }
 
 
-/** @return the next character received.  */
 SA_INLINE uint8_t usart_recv()
 {
     loop_until_bit_is_set(UCSR0A, RXC0);
@@ -96,11 +208,6 @@ SA_INLINE uint8_t usart_recv()
 }
 
 
-/**
- * Prints a character.
- *
- * @param ch The character to transmit on serial line.
- */
 SA_FUNC void usart_send(const uint8_t ch)
 {
     loop_until_bit_is_set(UCSR0A, UDRE0);
@@ -108,11 +215,6 @@ SA_FUNC void usart_send(const uint8_t ch)
 }
 
 
-/**
- * Read at most @a n characters.
- *
- * @return the number of characters read
- */
 SA_FUNC size_t usart_recvn(uint8_t* dst, size_t n, bool echo)
 {
     for (size_t i = 0; i < n - 1; ++i) {
@@ -129,7 +231,6 @@ SA_FUNC size_t usart_recvn(uint8_t* dst, size_t n, bool echo)
 }
 
 
-/** Prints a string to the serial connection.  */
 SA_INLINE inline void usart_print(char const* ch)
 {
     while (*ch) {
@@ -137,7 +238,7 @@ SA_INLINE inline void usart_print(char const* ch)
     }
 }
 
-/** Prints the string representation of the given `uint8_t`.  */
+
 SA_FUNC void usart_8(const uint8_t num)
 {
     char buff[4];
@@ -146,7 +247,6 @@ SA_FUNC void usart_8(const uint8_t num)
 }
 
 
-/** Prints the string representation of the given `uint16_t`.  */
 SA_FUNC void usart_16(const uint16_t num)
 {
     char buff[7];
@@ -155,7 +255,6 @@ SA_FUNC void usart_16(const uint16_t num)
 }
 
 
-/** Prints the string representation of the given `uint32_t`.  */
 SA_FUNC void usart_32(const uint32_t num)
 {
     char buff[11];
@@ -164,7 +263,6 @@ SA_FUNC void usart_32(const uint32_t num)
 }
 
 
-/** Prints a hexidecimal string representation of the given `uint8_t`. */
 SA_FUNC void usart_hex_8(const uint8_t num)
 {
     char buff[5];
@@ -173,7 +271,6 @@ SA_FUNC void usart_hex_8(const uint8_t num)
 }
 
 
-/** Prints a hexidecimal string representation of the given `uint16_t`. */
 SA_FUNC void usart_hex_16(const uint16_t num)
 {
     char buff[7];
@@ -182,7 +279,6 @@ SA_FUNC void usart_hex_16(const uint16_t num)
 }
 
 
-/** Prints a hexidecimal string representation of the given `uint32_t`. */
 SA_FUNC void usart_hex_32(const uint32_t num)
 {
     char buff[11];
@@ -190,7 +286,6 @@ SA_FUNC void usart_hex_32(const uint32_t num)
     usart_print(buff);
 }
 
-/** Prints a binary string representation of the given `uint8_t`.  */
 SA_FUNC void usart_bin_8(const uint8_t num)
 {
     uint8_t i = 8;
@@ -200,7 +295,6 @@ SA_FUNC void usart_bin_8(const uint8_t num)
 }
 
 
-/** Prints a binary string representation of the given `uint16_t`.  */
 SA_FUNC void usart_bin_16(const uint16_t num)
 {
     uint8_t i = 16;
@@ -210,7 +304,6 @@ SA_FUNC void usart_bin_16(const uint16_t num)
 }
 
 
-/** Prints a binary string representation of the given `uint32_t`.  */
 SA_FUNC void usart_bin_32(const uint32_t num)
 {
     uint8_t i = 32;
@@ -220,7 +313,6 @@ SA_FUNC void usart_bin_32(const uint32_t num)
 }
 
 
-/** Prints a `CRLF`.  */
 SA_INLINE void usart_crlf()
 {
     usart_send('\r');
@@ -228,10 +320,9 @@ SA_INLINE void usart_crlf()
 }
 
 
-/** Prints the given text, followed by a `CRLF`.  */
-SA_INLINE void usart_println(char const* ch)
+SA_INLINE void usart_println(char const* str)
 {
-    usart_print(ch);
+    usart_print(str);
     usart_crlf();
 }
 
@@ -242,7 +333,8 @@ SA_FUNC int usart_stream_recv(__attribute__((unused)) FILE* stream)
 }
 
 
-SA_FUNC int usart_stream_send(const char c, __attribute__((unused)) FILE* _stream)
+SA_FUNC int usart_stream_send(const char c,
+                              __attribute__((unused)) FILE* _stream)
 {
     if (c == '\n') {
         usart_send((uint8_t) '\r');
@@ -253,34 +345,18 @@ SA_FUNC int usart_stream_send(const char c, __attribute__((unused)) FILE* _strea
 }
 
 
-/**
- * Configures `STDOUT` to write to USART.
- *
- * @note Using some standard `stdio.h` functions may seriously bloat your
- *   binary.
- */
 SA_INLINE void usart_setup_stdout()
 {
     stdout = fdevopen(usart_stream_send, NULL);
 }
 
-/**
- * Configures `STDIN` to read from USART.
- *
- * @note Using some standard `stdio.h` functions may seriously bloat your
- *   binary.
- */
+
 SA_INLINE void usart_setup_stdin()
 {
     stdin = fdevopen(NULL, usart_stream_recv);
 }
 
-/**
- * Configures `STDIN` and `STDOUT` to read and write to USART.
- *
- * @note Using some standard `stdio.h` functions may seriously bloat your
- *   binary.
- */
+
 SA_INLINE void usart_setup_streams()
 {
     usart_setup_stdin();
@@ -357,9 +433,6 @@ SA_FUNC uint16_t __usart_read_uint16(char const* prompt, uint8_t len,
 }
 
 
-/**
- * Prompt the user to enter a number, enforcing a min and max value.
- */
 SA_FUNC uint16_t usart_read_uint16(char const* prompt, const uint8_t len,
                                   const uint16_t min, const uint16_t max)
 {
@@ -367,11 +440,7 @@ SA_FUNC uint16_t usart_read_uint16(char const* prompt, const uint8_t len,
 }
 
 
-/**
- * Print out the given array of bytes, in hex, binary, decimal, and (if
- * applicable) ASCII formats.
- */
-SA_FUNC void usart_dump_array_8(uint8_t* arr, uint8_t len)
+SA_FUNC void usart_dump_array_8(uint8_t* arr, size_t len)
 {
     char str[7];
     for(uint8_t i = 0; i < len; ++i) {

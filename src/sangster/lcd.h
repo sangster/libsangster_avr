@@ -1,21 +1,21 @@
 #ifndef SANGSTER_LCD_H
 #define SANGSTER_LCD_H
 /*
- *  "libsangster_avr_common" is a library of common AVR functionality.
- *  Copyright (C) 2018  Jon Sangster
+ * "libsangster_avr" is a library of common AVR functionality.
+ * Copyright (C) 2018  Jon Sangster
  *
- *  This program is free software: you can redistribute it and/or modify it
- *  under the terms of the GNU General Public License as published by the Free
- *  Software Foundation, either version 3 of the License, or (at your option)
- *  any later version.
+ * This program is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option)
+ * any later version.
  *
- *  This program is distributed in the hope that it will be useful, but WITHOUT
- *  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- *  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
- *  more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
  *
- *  You should have received a copy of the GNU General Public License along
- *  with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 /**
  * @file
@@ -30,6 +30,10 @@
 #include "sangster/lcd_charmap.h"
 #include "sangster/pinout.h"
 
+
+/*******************************************************************************
+ * Definitions
+ ******************************************************************************/
 /** The number of bytes in the LCD's DRAM that separates each row */
 #define LCD_ROW_OFFSET 0x40
 
@@ -42,7 +46,10 @@
 #define BOOL_SET(x, y, z) do{ if (x) { y |= (z); } else {  y &= ~(z); } }while(0)
 
 
-/** LCD Commands and their instruction codes */
+/*******************************************************************************
+ * Types
+ ******************************************************************************/
+/// LCD Commands and their instruction codes
 enum lcd_command
 {
     LCD_CLEAR_DISPLAY   = 0x01, ///< Blank the screen
@@ -52,46 +59,65 @@ enum lcd_command
     LCD_FUNCTION_SET    = 0x20, ///< Setup # of lines, font size, etc.
     LCD_SET_DDRAM_ADDR  = 0x80  ///< Choose the cursor location
 };
+typedef enum lcd_command LcdCommand;
 
-enum { // Display Entry Mode
+enum lcd_entry_mode
+{
     LCD_ENTRY_RIGHT = 0x00, ///< Text is printed right-to-left
     LCD_ENTRY_LEFT  = 0x02  ///< Text is printed left-to-right
 };
-enum {
+typedef enum lcd_entry_mode LcdEntryMode;
+
+enum lcd_shift_direction
+{
     LCD_ENTRY_SHIFT_DECREMENT = 0x00, ///< Shift to the left
     LCD_ENTRY_SHIFT_INCREMENT = 0x01  ///< Shift to the right
 };
-enum lcd_display_control {
+typedef enum lcd_shift_direction LcdShiftDirection;
+
+enum lcd_display_control
+{
     LCD_BLINK   = 0x01, ///< Turn blinking on/off
     LCD_CURSOR  = 0x02, ///< Turn the cursor on/off
     LCD_DISPLAY = 0x04, ///< Turn the screen on/off
 };
-enum { // LCD flags: function set
+typedef enum lcd_display_control LcdDisplayControl;
+
+enum lcd_wire_count
+{
     LCD_MODE_4BIT = 0x00, ///< Use 4 pins to transfer data
     LCD_MODE_8BIT = 0x10  ///< Use 8 pins to transfer data
 };
-enum {
+typedef enum lcd_wire_count LcdWireCount;
+
+enum lcd_line_count
+{
     LCD_LINES_1 = 0x00, ///< Use 1 line of text
     LCD_LINES_2 = 0x08  ///< Use 2 lines of text
 };
-enum {
+typedef enun lcd_line_count LcdLineCount;
+
+enum lcd_font
+{
     LCD_DOTS_5x8  = 0x00, ///< Use a 5x8 font
     LCD_DOTS_5x10 = 0x04  ///< Use a 5x10 font
 };
-enum { // Write Modes
+typedef enum lcd_font LcdFont;
+
+enum lcd_write_mode
+{ // Write Modes
     LCD_MODE_CMD = 0x00, ///< Send a command to the LCD
     LCD_MODE_DAT = 0x01  ///< Send character data to the LCD
 };
+typedef enum lcd_write_mode LcdWriteMode;
 
 typedef struct lcd Lcd;
-
 
 /**
  * Allows the caller to provide custom functionality for sending data to the
  * LCD, one nibble at a time
  */
 typedef void (*LcdWrite4)(const Lcd *lcd, const uint8_t nibble);
-
 
 struct lcd
 {
@@ -109,7 +135,154 @@ struct lcd
 };
 
 
-/** The default LcdWrite4 implementation. */
+/*******************************************************************************
+ * Function Declarations
+ ******************************************************************************/
+/// The default LcdWrite4 implementation
+SA_FUNC void default_lcd_write4(const Lcd*, uint8_t);
+
+/// Flips the EN I/O port a couple times to end a write
+SA_FUNC void lcd_pulse(const Lcd*);
+
+/// Send 1 nibble of data to the LCD
+SA_FUNC void lcd_write4(const Lcd*, uint8_t);
+
+/**
+ * @param lcd The interfacing device
+ */
+SA_FUNC void lcd_send(const Lcd*, uint8_t val, uint8_t mode);
+
+SA_INLINE void lcd_command(const Lcd*, uint8_t);
+
+/// Turn the display on or off
+SA_FUNC void lcd_display(Lcd*, bool);
+
+/// Turn the cursor on or off
+SA_FUNC void lcd_cursor(Lcd*, bool);
+
+/// Start or stop blinking
+SA_FUNC void lcd_blink(Lcd*, bool);
+
+/// Erase all characters from the LCD screen
+SA_FUNC void lcd_clear(const Lcd*);
+
+SA_FUNC void lcd_begin(Lcd*, uint8_t rows, uint8_t dot_size);
+
+/*
+ * @param write4 an optional write method
+ */
+SA_FUNC void lcd_init(Lcd*, uint8_t rows, LcdWrite4);
+
+/**
+ * Moves the cursor on the LCD; where the next character will be placed. If
+ * @ref LCD_BLINK_ON is set, the cursor will blink at this location.
+ *
+ * @param lcd The interfacing device
+ * @param row,col The location to move the cursor to
+ */
+SA_FUNC void lcd_move_cursor(const Lcd*, uint8_t row, uint8_t col);
+
+/**
+ * Prints the given character on the LCD, at it's cursor location.
+ *
+ * @param lcd The interfacing device
+ * @param ch The character to add to the display
+ */
+SA_INLINE void lcd_write(const Lcd*, uint8_t);
+
+/**
+ * Prints `n` characters of the the given text on the LCD, starting at it's
+ * cursor location.
+ *
+ * @param lcd The interfacing device
+ * @param str The new text to display
+ * @param n   The number of characters to print
+ */
+SA_FUNC size_t lcd_writen(const Lcd*, const char*, size_t);
+
+/**
+ * Prints `n` characters of the the given text from PGMSPACE on the LCD,
+ * starting at it's cursor location.
+ *
+ * @param lcd The interfacing device
+ * @param str The new text to display, from PGMSPACE
+ * @param n   The number of characters to print
+ */
+SA_FUNC size_t lcd_writen_P(const Lcd*, PGM_P, size_t);
+
+/**
+ * Prints the given text on the LCD, starting at it's cursor location.
+ *
+ * @param lcd The interfacing device
+ * @param str The new text to display
+ */
+SA_INLINE void lcd_print(const Lcd*, const char*);
+
+/**
+ * Prints the given text from PGMSPACE on the LCD, starting at it's cursor
+ * location.
+ *
+ * @param lcd The interfacing device
+ * @param str The new text to display
+ */
+SA_INLINE void lcd_print_P(const Lcd*, PGM_P);
+
+/**
+ * Clear the LCD and print the given text.
+ *
+ * @param lcd The interfacing device
+ * @param str The new text to display
+ */
+SA_INLINE void lcd_reprint(const Lcd*, const char*);
+
+/**
+ * Clear the LCD and print the given text from PGMSPACE.
+ *
+ * @param lcd The interfacing device
+ * @param str The new text to display
+ */
+SA_INLINE void lcd_reprint_P(const Lcd*, PGM_P);
+
+SA_FUNC void lcd_buffer_reprint(const Lcd*, uint8_t r, uint8_t c);
+
+/**
+ * Add a character to the LCD back-buffer. The LCD will only be updated if the
+ * buffer actually changes.
+ */
+SA_FUNC void lcd_buffer_send_at(const Lcd*, uint8_t r, uint8_t c, char);
+
+/**
+ * Add a substring to the LCD back-buffer. The LCD will only be updated if the
+ * buffer actually changes.
+ */
+SA_FUNC void lcd_buffer_update_at(const Lcd*, uint8_t r, uint8_t c,
+                                  const char*);
+
+/**
+ * Add a substring from PMG space to the LCD back-buffer. The LCD will only be
+ * updated if the buffer actually changes.
+ */
+SA_FUNC void lcd_buffer_update_at_P(const Lcd*, uint8_t r, uint8_t c, PGM_P);
+
+/// Return the cursor to its initial position
+SA_FUNC void lcd_home(const Lcd*);
+
+/**
+ * Replace an entire line in the back-buffer. The LCD will only be updated if
+ * the buffer has changed.
+ */
+SA_INLINE void lcd_buffer_update(const Lcd*, uint8_t r, const char*);
+
+/**
+ * Replace an entire line in the back-buffer with a string from PGM space. The
+ * LCD will only be updated if the buffer has changed.
+ */
+SA_INLINE void lcd_buffer_update_P(const Lcd*, uint8_t r, PGM_P);
+
+
+/*******************************************************************************
+ * Function Definitions
+ ******************************************************************************/
 SA_FUNC void default_lcd_write4(const Lcd* lcd, const uint8_t nibble)
 {
     for (uint8_t i = 0; i < 4; ++i) {
@@ -122,7 +295,6 @@ SA_FUNC void default_lcd_write4(const Lcd* lcd, const uint8_t nibble)
 }
 
 
-/** Flips the EN I/O port a couple times to end a write */
 SA_FUNC void lcd_pulse(const Lcd* lcd)
 {
     pinout_clr(lcd->en);
@@ -136,7 +308,6 @@ SA_FUNC void lcd_pulse(const Lcd* lcd)
 }
 
 
-/** Send 1 nibble of data to the LCD */
 SA_FUNC void lcd_write4(const Lcd* lcd, const uint8_t nibble)
 {
     if (lcd->write4 != NULL) {
@@ -148,9 +319,6 @@ SA_FUNC void lcd_write4(const Lcd* lcd, const uint8_t nibble)
 }
 
 
-/**
- * @param lcd The interfacing device
- */
 SA_FUNC void lcd_send(const Lcd* lcd, const uint8_t value, const uint8_t mode)
 {
     if (mode) {
@@ -174,7 +342,6 @@ SA_INLINE void lcd_command(const Lcd* lcd, const uint8_t value)
 }
 
 
-/** Turn the display on or off. */
 SA_FUNC void lcd_display(Lcd* lcd, const bool enabled)
 {
     BOOL_SET(enabled, lcd->display_control, LCD_DISPLAY);
@@ -182,7 +349,6 @@ SA_FUNC void lcd_display(Lcd* lcd, const bool enabled)
 }
 
 
-/** Turn the cursor on or off. */
 SA_FUNC void lcd_cursor(Lcd* lcd, const bool enabled)
 {
     BOOL_SET(enabled, lcd->display_control, LCD_CURSOR);
@@ -190,7 +356,6 @@ SA_FUNC void lcd_cursor(Lcd* lcd, const bool enabled)
 }
 
 
-/** Start or stop blinking. */
 SA_FUNC void lcd_blink(Lcd* lcd, const bool enabled)
 {
     BOOL_SET(enabled, lcd->display_control, LCD_BLINK);
@@ -198,7 +363,6 @@ SA_FUNC void lcd_blink(Lcd* lcd, const bool enabled)
 }
 
 
-/** Erase all characters from the LCD screen */
 SA_FUNC void lcd_clear(const Lcd* lcd)
 {
     lcd_command(lcd, LCD_CLEAR_DISPLAY);
@@ -248,9 +412,6 @@ SA_FUNC void lcd_begin(Lcd* lcd, const uint8_t rows, const uint8_t dot_size)
 }
 
 
-/*
- * @param write4 an optional write method
- */
 SA_FUNC void lcd_init(Lcd* lcd, const uint8_t rows, LcdWrite4 write4)
 {
     lcd->display_function = LCD_MODE_4BIT | LCD_LINES_1 | LCD_DOTS_5x8;
@@ -259,13 +420,6 @@ SA_FUNC void lcd_init(Lcd* lcd, const uint8_t rows, LcdWrite4 write4)
 }
 
 
-/**
- * Moves the cursor on the LCD; where the next character will be placed. If
- * @ref LCD_BLINK_ON is set, the cursor will blink at this location.
- *
- * @param lcd The interfacing device
- * @param row,col The location to move the cursor to
- */
 SA_FUNC void lcd_move_cursor(const Lcd* lcd, uint8_t row, const uint8_t col)
 {
     if (row >= LCD_ROWS) {
@@ -279,27 +433,13 @@ SA_FUNC void lcd_move_cursor(const Lcd* lcd, uint8_t row, const uint8_t col)
 }
 
 
-/**
- * Prints the given character on the LCD, at it's cursor location.
- *
- * @param lcd The interfacing device
- * @param ch The character to add to the display
- */
 SA_INLINE void lcd_write(const Lcd* lcd, const uint8_t ch)
 {
     lcd_send(lcd, ch, LCD_MODE_DAT);
 }
 
 
-/**
- * Prints `n` characters of the the given text on the LCD, starting at it's
- * cursor location.
- *
- * @param lcd The interfacing device
- * @param str The new text to display
- * @param n   The number of characters to print
- */
-SA_FUNC size_t lcd_writen(const Lcd* lcd, const char* str, size_t n)
+SA_FUNC size_t lcd_writen(const Lcd* lcd, PGM_P str, size_t n)
 {
     for (size_t i = 0; i < n; ++i) {
         if (!str[i]) {
@@ -311,15 +451,7 @@ SA_FUNC size_t lcd_writen(const Lcd* lcd, const char* str, size_t n)
 }
 
 
-/**
- * Prints `n` characters of the the given text from PGMSPACE on the LCD,
- * starting at it's cursor location.
- *
- * @param lcd The interfacing device
- * @param str The new text to display, from PGMSPACE
- * @param n   The number of characters to print
- */
-SA_FUNC size_t lcd_writen_P(const Lcd* lcd, const char* str, size_t n)
+SA_FUNC size_t lcd_writen_P(const Lcd* lcd, PGM_P str, size_t n)
 {
     for (size_t i = 0; i < n; ++i) {
         uint8_t byte = pgm_read_byte(&str[i]);
@@ -332,12 +464,6 @@ SA_FUNC size_t lcd_writen_P(const Lcd* lcd, const char* str, size_t n)
 }
 
 
-/**
- * Prints the given text on the LCD, starting at it's cursor location.
- *
- * @param lcd The interfacing device
- * @param str The new text to display
- */
 SA_INLINE void lcd_print(const Lcd* lcd, const char* str)
 {
     while(*str) {
@@ -346,14 +472,7 @@ SA_INLINE void lcd_print(const Lcd* lcd, const char* str)
 }
 
 
-/**
- * Prints the given text from PGMSPACE on the LCD, starting at it's cursor
- * location.
- *
- * @param lcd The interfacing device
- * @param str The new text to display
- */
-SA_INLINE void lcd_print_P(const Lcd* lcd, const char* str)
+SA_INLINE void lcd_print_P(const Lcd* lcd, PGM_P str)
 {
     char byte;
     while ((byte = pgm_read_byte(str++))) {
@@ -362,12 +481,6 @@ SA_INLINE void lcd_print_P(const Lcd* lcd, const char* str)
 }
 
 
-/**
- * Clear the LCD and print the given text.
- *
- * @param lcd The interfacing device
- * @param str The new text to display
- */
 SA_INLINE void lcd_reprint(const Lcd* lcd, const char* str)
 {
     lcd_clear(lcd);
@@ -375,13 +488,7 @@ SA_INLINE void lcd_reprint(const Lcd* lcd, const char* str)
 }
 
 
-/**
- * Clear the LCD and print the given text from PGMSPACE.
- *
- * @param lcd The interfacing device
- * @param str The new text to display
- */
-SA_INLINE void lcd_reprint_P(const Lcd* lcd, const char* str)
+SA_INLINE void lcd_reprint_P(const Lcd* lcd, PGM_P str)
 {
     lcd_clear(lcd);
     lcd_print_P(lcd, str);
@@ -399,12 +506,8 @@ SA_FUNC void lcd_buffer_reprint(const Lcd* lcd, const uint8_t row,
 }
 
 
-/**
- * Add a character to the LCD back-buffer. The LCD will only be updated if the
- * buffer actually changes.
- */
 SA_FUNC void lcd_buffer_send_at(const Lcd* lcd, const uint8_t row,
-                               const uint8_t col, const char ch)
+                                const uint8_t col, const char ch)
 {
     if (ch == (*lcd->back_buffer)[row][col]) {
         return;
@@ -414,12 +517,8 @@ SA_FUNC void lcd_buffer_send_at(const Lcd* lcd, const uint8_t row,
 }
 
 
-/**
- * Add a substring to the LCD back-buffer. The LCD will only be updated if the
- * buffer actually changes.
- */
 SA_FUNC void lcd_buffer_update_at(const Lcd* lcd, const uint8_t row,
-                                 const uint8_t col, const char* str)
+                                  const uint8_t col, const char* str)
 {
     char* substr = &(*lcd->back_buffer)[row][col];
     if (strncmp(substr, str, LCD_COLS - col) == 0) {
@@ -430,12 +529,8 @@ SA_FUNC void lcd_buffer_update_at(const Lcd* lcd, const uint8_t row,
 }
 
 
-/**
- * Add a substring from PMG space to the LCD back-buffer. The LCD will only be
- * updated if the buffer actually changes.
- */
 SA_FUNC void lcd_buffer_update_at_P(const Lcd* lcd, uint8_t row, uint8_t col,
-                                   const char* str)
+                                   PGM_P str)
 {
     char* substr = &(*lcd->back_buffer)[row][col];
     if (strncmp_P(substr, str, LCD_COLS - col) == 0) {
@@ -446,7 +541,6 @@ SA_FUNC void lcd_buffer_update_at_P(const Lcd* lcd, uint8_t row, uint8_t col,
 }
 
 
-/** Return the cursor to its initial position. */
 SA_FUNC void lcd_home(const Lcd* lcd)
 {
     lcd_command(lcd, LCD_RETURN_HOME);
@@ -454,20 +548,12 @@ SA_FUNC void lcd_home(const Lcd* lcd)
 }
 
 
-/**
- * Replace an entire line in the back-buffer. The LCD will only be updated if
- * the buffer has changed.
- */
 SA_INLINE void lcd_buffer_update(const Lcd* lcd, uint8_t row, const char* str)
 {
     lcd_buffer_update_at(lcd, row, 0, str);
 }
 
 
-/**
- * Replace an entire line in the back-buffer with a string from PGM space. The
- * LCD will only be updated if the buffer has changed.
- */
 SA_INLINE void lcd_buffer_update_P(const Lcd* lcd, uint8_t row, PGM_P str)
 {
     lcd_buffer_update_at_P(lcd, row, 0, str);

@@ -1,23 +1,22 @@
 #ifndef SANGSTER_TWI_H
 #define SANGSTER_TWI_H
 /*
- *  "libsangster_avr_common" is a library of common AVR functionality.
- *  Copyright (C) 2018  Jon Sangster
+ * "libsangster_avr" is a library of common AVR functionality.
+ * Copyright (C) 2018  Jon Sangster
  *
- *  This program is free software: you can redistribute it and/or modify it
- *  under the terms of the GNU General Public License as published by the Free
- *  Software Foundation, either version 3 of the License, or (at your option)
- *  any later version.
+ * This program is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option)
+ * any later version.
  *
- *  This program is distributed in the hope that it will be useful, but WITHOUT
- *  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- *  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
- *  more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
  *
- *  You should have received a copy of the GNU General Public License along
- *  with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <https://www.gnu.org/licenses/>.
  */
-
 /**
  * @file
  */
@@ -28,6 +27,10 @@
 #include "sangster/api.h"
 #include "sangster/pinout.h"
 
+
+/*******************************************************************************
+ * Definitions
+ ******************************************************************************/
 /**
  * TWI can run at two speeds:
  *  - normal: 100 kHz
@@ -44,6 +47,9 @@
 #endif//TWI_BUFF_LEN
 
 
+/*******************************************************************************
+ * Types
+ ******************************************************************************/
 enum twi_state
 {
     TWI_READY = 0,
@@ -115,10 +121,64 @@ struct twi
 };
 
 
-/// Singleton
-static Twi* TWI;
+/*******************************************************************************
+ * Global Data
+ ******************************************************************************/
+static Twi* TWI; ///< Singleton
 
 
+/*******************************************************************************
+ * Function Declarations
+ ******************************************************************************/
+SA_FUNC void twi_reply(TwiAckOpt);
+
+SA_FUNC void twi_stop();
+
+SA_FUNC void twi_release_bus();
+
+SA_FUNC void on_twi_master_tx(uint8_t);
+
+SA_FUNC void on_twi_master_rx(uint8_t);
+
+SA_FUNC void on_twi_slave_tx(uint8_t);
+
+SA_FUNC void on_twi_slave_rx(uint8_t);
+
+SA_FUNC void twi_handle_vect();
+
+SA_FUNC void twi_init(Twi*);
+
+SA_INLINE void twi_disable();
+
+SA_INLINE void twi_begin_tx(const uint8_t);
+
+SA_FUNC TwiBusWriteRes twi_bus_write(uint8_t, uint8_t);
+
+SA_FUNC TwiBusWriteRes twi_end_tx(uint8_t);
+
+SA_FUNC size_t twi_master_write(uint8_t);
+
+SA_FUNC TwiWriteRes twi_slave_write(uint8_t);
+
+SA_FUNC int16_t twi_read();
+
+/**
+ * May only be called in:
+ *   - slave tx callback
+ *   - after twi_begin_tx()
+ */
+SA_FUNC size_t twi_write(const uint8_t);
+
+SA_FUNC uint8_t twi_bus_read(uint8_t address, uint8_t *data, size_t size,
+                             uint8_t send_stop);
+
+SA_FUNC uint8_t twi_bus_request(uint8_t address, size_t size, uint32_t iaddress,
+                                size_t isize, uint8_t send_stop);
+
+
+/*******************************************************************************
+ * Function Definitions
+ ******************************************************************************/
 SA_FUNC void twi_reply(TwiAckOpt send_ack)
 {
     if (send_ack == TWI_ACK_SEND) {
@@ -501,11 +561,6 @@ SA_FUNC int16_t twi_read()
 }
 
 
-/**
- * May only be called in:
- *   - slave tx callback
- *   - after twi_begin_tx()
- */
 SA_FUNC size_t twi_write(const uint8_t data)
 {
     if (TWI->is_transmitting) {
@@ -516,7 +571,7 @@ SA_FUNC size_t twi_write(const uint8_t data)
 
 
 SA_FUNC uint8_t twi_bus_read(uint8_t address, uint8_t *data, size_t size,
-                            uint8_t send_stop)
+                             uint8_t send_stop)
 {
     if (size >= TWI_BUFF_LEN) {
         return 0;

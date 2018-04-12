@@ -1,5 +1,5 @@
-#ifndef SANGSTER_TIMER_H
-#define SANGSTER_TIMER_H
+#ifndef SANGSTER_PCD8544_H
+#define SANGSTER_PCD8544_H
 /*
  * "libsangster_avr" is a library of common AVR functionality.
  * Copyright (C) 2018  Jon Sangster
@@ -17,9 +17,10 @@
  * You should have received a copy of the GNU General Public License along with
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
-/**
- * @file
- */
-#define CYCLES_PER_US (F_CPU / 1000000UL)
+#include "sangster/pcd8544/core.h"
+#include "sangster/pcd8544/bmp.h"
+#include "sangster/pcd8544/draw.h"
+#include "sangster/pcd8544/text.h"
+#include "sangster/pcd8544/transaction.h"
 
-#endif // SANGSTER_TIMER_H
+#endif//SANGSTER_PCD8544_H

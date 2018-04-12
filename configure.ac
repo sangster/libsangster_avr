@@ -6,7 +6,6 @@ AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([build-aux])
 
 AC_CONFIG_SRCDIR([src/sangster/pinout.h])
-AC_CONFIG_HEADERS([config.h])
 
 AM_INIT_AUTOMAKE([foreign -Wall -Werror])
 

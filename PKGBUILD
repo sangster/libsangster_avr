@@ -3,7 +3,7 @@
 pkgname=libsangster_avr-git
 pkgver=0.3
 pkgrel=1
-pkgdesc='A blah blah blah'
+pkgdesc='A library of common AVR functionality'
 depends=('avr-libc>=2.0.0')
 arch=('any')
 url="https://github.com/sangster/libsangster_avr"

@@ -25,3 +25,4 @@ build-aux/
 html/
 latex/
 .libs/
+stamp-h1

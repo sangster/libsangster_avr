@@ -1,23 +1,22 @@
 #ifndef SANGSTER_RTC_1307_H
 #define SANGSTER_RTC_1307_H
 /*
- *  "libsangster_avr_common" is a library of common AVR functionality.
- *  Copyright (C) 2018  Jon Sangster
+ * "libsangster_avr" is a library of common AVR functionality.
+ * Copyright (C) 2018  Jon Sangster
  *
- *  This program is free software: you can redistribute it and/or modify it
- *  under the terms of the GNU General Public License as published by the Free
- *  Software Foundation, either version 3 of the License, or (at your option)
- *  any later version.
+ * This program is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option)
+ * any later version.
  *
- *  This program is distributed in the hope that it will be useful, but WITHOUT
- *  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- *  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
- *  more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
  *
- *  You should have received a copy of the GNU General Public License along
- *  with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <https://www.gnu.org/licenses/>.
  */
-
 /**
  * @file
  */
@@ -25,7 +24,11 @@
 #include "sangster/api.h"
 #include "sangster/twi.h"
 
-// Address defined by RTC-1307 datasheet, p.8
+
+/*******************************************************************************
+ * Definitions
+ ******************************************************************************/
+/// Address defined by RTC-1307 datasheet, p.8
 #define RTC_1307_ADDR (_BV(6) | _BV(5) | _BV(3))
 
 #define SEC_CH    7 ///< CLOCK HALT bit in the SECONDS register
@@ -37,6 +40,9 @@
 #define CTRL_OUT  3 ///< OUTPUT CONTROL bit in the CONTROL register
 
 
+/*******************************************************************************
+ * Types
+ ******************************************************************************/
 typedef struct rtc_1307 Rtc1307;
 struct rtc_1307
 {
@@ -44,6 +50,34 @@ struct rtc_1307
 };
 
 
+/*******************************************************************************
+ * Function Declarations
+ ******************************************************************************/
+SA_INLINE uint8_t rtc_init(Rtc1307*);
+
+SA_FUNC TwiBusWriteRes rtc_disable();
+
+SA_FUNC uint8_t rtc_is_running();
+
+SA_INLINE uint8_t dec2bcd(uint8_t);
+
+SA_INLINE uint8_t bcd2dec(uint8_t);
+
+SA_FUNC TwiBusWriteRes rtc_set(struct tm*);
+
+/**
+ * @return 1 if successful, 0 if not enough bytes read
+ */
+SA_FUNC uint8_t rtc_read(struct tm*);
+
+SA_FUNC uint8_t rtc_read_8(uint8_t);
+
+SA_FUNC void rtc_read_registers(uint8_t*);
+
+
+/*******************************************************************************
+ * Function Definitions
+ ******************************************************************************/
 SA_INLINE uint8_t rtc_init(Rtc1307* clock)
 {
     twi_init(&clock->twi);
@@ -99,9 +133,6 @@ SA_FUNC TwiBusWriteRes rtc_set(struct tm* user_time)
 }
 
 
-/**
- * @return 1 if successful, 0 if not enough bytes read
- */
 SA_FUNC uint8_t rtc_read(struct tm* dest)
 {
     uint8_t size = twi_bus_request(RTC_1307_ADDR, 7, 0x00, 1, 1);

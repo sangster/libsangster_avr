@@ -1,7 +1,12 @@
 nobase_include_HEADERS = sangster/api.h \
                          sangster/lcd.h \
                          sangster/lcd_charmap.h \
-                         sangster/led_builtin.h \
+						 sangster/pcd8544.h \
+						 sangster/pcd8544/core.h \
+						 sangster/pcd8544/bmp.h \
+						 sangster/pcd8544/draw.h \
+						 sangster/pcd8544/text.h \
+						 sangster/pcd8544/transaction.h \
                          sangster/pinout.h \
                          sangster/ring_buff_8.h \
                          sangster/rtc_1307.h \

@@ -1,6 +1,7 @@
 #ifndef SANGSTER_SD_H
 #define SANGSTER_SD_H
-/* Arduino SdFat Library
+/*
+ * Arduino SdFat Library
  * Copyright (C) 2009 by William Greiman
  *
  * This file is part of the Arduino SdFat Library
@@ -39,6 +40,10 @@
 #include "sangster/sd/sd_file.h"
 #include "sangster/sd/sd_volume.h"
 
+
+/*******************************************************************************
+ * Definitions
+ ******************************************************************************/
 #define FILE_READ O_READ
 #define FILE_WRITE (O_READ | O_WRITE | O_CREAT)
 
@@ -48,6 +53,9 @@
 #define RETURN_ERR_FILE do { SdFile err; sd_file_init(&err); return err; }while(0)
 
 
+/*******************************************************************************
+ * Types
+ ******************************************************************************/
 typedef struct sd_class SdClass;
 struct sd_class
 {
@@ -62,16 +70,160 @@ struct sd_class
     int file_open_mode;
 };
 
-typedef bool (*sd_callback_f)(SdFile* parent_dir,
-                              const char* file_path_component,
-                              bool is_last_component, void* object);
+typedef bool (*SdWalkPathFunc)(SdFile* parent_dir,
+                               const char* file_path_component,
+                               bool is_last_component, void* object);
 
 
+/*******************************************************************************
+ * Function Declarations
+ ******************************************************************************/
 /*
  * Performs the initialisation required by the sdfatlib library.
  *
  * Return true if initialization succeeds, false otherwise.
  */
+SA_FUNC bool sd_begin(SdClass*, SdFileDateTime);
+
+/**
+ * Call this when a card is removed. It will allow you to inster and initialise
+ * a new card.
+ */
+SA_FUNC void sd_end(SdClass*);
+
+/**
+ * This little helper is used to traverse paths.
+ *
+ * @param [in]  sd
+ * @param [in]  filepath
+ * @param [out] index
+ */
+SA_FUNC SdFile sd_get_parent_dir(SdClass*, const char*, int*)
+
+/*
+ * Open the supplied file path for reading or writing.
+ *
+ * The file content can be accessed via the `file` property of the `SDClass`
+ * object--this property is currently a standard `SdFile` object from
+ * `sdfatlib`.
+ *
+ * Defaults to read only.
+ *
+ * If `write` is true, default action (when `append` is true) is to append data
+ * to the end of the file.
+ *
+ * If `append` is false then the file will be truncated first.
+ *
+ * If the file does not exist and it is opened for writing the file will be
+ * created.
+ *
+ * An attempt to open a file for reading that does not exist is an error.
+ */
+SA_FUNC SdFile sd_open(SdClass*, const char*, uint8_t);
+
+/**
+ * @defgroup sd_callbacks Callback functions used by sd_walk_path
+ *
+ *  The callbacks used to implement various functionality follow.
+ *
+ *  Each callback is supplied with a parent directory handle, character string
+ *  with the name of the current file path component, a flag indicating if this
+ *  component is the last in the path and a pointer to an arbitrary object used
+ *  for context.
+ */
+/// @{
+
+/*
+ * Callback used to determine if a file/directory exists in parent directory.
+ *
+ * Returns true if file path exists.
+ */
+SA_FUNC bool sd_callback_path_exists(SdFile*, const char*,
+                                     __attribute__((unused)) bool,
+                                     __attribute__((unused)) void*);
+
+/*
+ * Callback used to create a directory in the parent directory if it does not
+ * already exist.
+ *
+ * Returns true if a directory was created or it already existed.
+ */
+SA_FUNC bool sd_callback_make_dir_path(SdFile*, const char*, bool, void*);
+
+SA_FUNC bool sd_callback_remove(SdFile*, const char*, bool,
+                                __attribute__((unused)) void*);
+
+SA_FUNC bool sd_callback_rmdir(SdFile*, const char*, bool,
+                              __attribute__((unused)) void*);
+/// @}
+
+/*
+ * Parse individual path components from a path.
+ *
+ * e.g. after repeated calls '/foo/bar/baz' will be split into 'foo', 'bar',
+ * 'baz'.
+ *
+ * This is similar to `strtok()` but copies the component into the supplied
+ * buffer rather than modifying the original string.
+ *
+ * `buffer` needs to be PATH_COMPONENT_BUFFER_LEN in size.
+ *
+ * `p_offset` needs to point to an integer of the offset at which the previous
+ * path component finished.
+ *
+ * Returns `true` if more components remain.
+ *
+ * Returns `false` if this is the last component. (This means path ended with
+ * 'foo' or 'foo/'.)
+ */
+SA_FUNC bool get_next_path_component(const char*, unsigned int*, char*);
+
+/*
+ * When given a file path (and parent directory--normally root), this function
+ * traverses the directories in the path and at each level calls the supplied
+ * callback function while also providing the supplied object for context if
+ * required.
+ *
+ * e.g. given the path '/foo/bar/baz' the callback would be called at the
+ * equivalent of '/foo', '/foo/bar' and '/foo/bar/baz'.
+ *
+ * The implementation swaps between two different directory/file handles as it
+ * traverses the directories and does not use recursion in an attempt to use
+ * memory efficiently.
+ *
+ * If a callback wishes to stop the directory traversal it should return
+ * false--in this case the function will stop the traversal, tidy up and return
+ * false.
+ *
+ * If a directory path doesn't exist at some point this function will also
+ * return false and not subsequently call the callback.
+ *
+ * If a directory path specified is complete, valid and the callback did not
+ * indicate the traversal should be interrupted then this function will return
+ * true.
+ */
+SA_FUNC bool sd_walk_path(const char*, SdFile*, SdWalkPathFunc, void*);
+
+/// @return `true` if the supplied file path exists in the given dir
+SA_INLINE bool sd_exists_in_dir(SdFile*, const char*);
+
+/// Returns true if the supplied file path exists
+SA_INLINE bool sd_exists(SdClass*, const char*);
+
+/*
+ * Makes a single directory or a heirarchy of directories. A rough equivalent
+ * to `mkdir -p`.
+ */
+SA_INLINE bool sd_mkdir(SdClass*, const char*);
+
+SA_INLINE bool sd_rmdir(SdClass*, const char*);
+
+SA_INLINE bool sd_remove(SdClass*, const char*);
+
+
+/*******************************************************************************
+ * Function Definitions
+ ******************************************************************************/
 SA_FUNC bool sd_begin(SdClass* sd, SdFileDateTime date_time_callback)
 {
     sd_date_time_callback = date_time_callback;
@@ -85,21 +237,12 @@ SA_FUNC bool sd_begin(SdClass* sd, SdFileDateTime date_time_callback)
 }
 
 
-// Call this when a card is removed. It will allow you to inster and initialise
-// a new card.
 SA_FUNC void sd_end(SdClass* sd)
 {
     sd_file_close(&sd->root);
 }
 
 
-/**
- * This little helper is used to traverse paths.
- *
- * @param [in] sd
- * @param [in] filepath
- * @param [out] index
- */
 SA_FUNC SdFile sd_get_parent_dir(SdClass* sd, const char* filepath, int* index)
 {
     // get parent directory
@@ -157,25 +300,6 @@ SA_FUNC SdFile sd_get_parent_dir(SdClass* sd, const char* filepath, int* index)
 }
 
 
-/*
- * Open the supplied file path for reading or writing.
- *
- * The file content can be accessed via the `file` property of the `SDClass`
- * object--this property is currently a standard `SdFile` object from
- * `sdfatlib`.
- *
- * Defaults to read only.
- *
- * If `write` is true, default action (when `append` is true) is to append data
- * to the end of the file.
- *
- * If `append` is false then the file will be truncated first.
- *
- * If the file does not exist and it is opened for writing the file will be
- * created.
- *
- * An attempt to open a file for reading that does not exist is an error.
- */
 SA_FUNC SdFile sd_open(SdClass* sd, const char* filepath, uint8_t mode)
 {
     int pathidx;
@@ -220,21 +344,6 @@ SA_FUNC SdFile sd_open(SdClass* sd, const char* filepath, uint8_t mode)
     return file;
 }
 
-
-/*******************************************************************************
- *  The callbacks used to implement various functionality follow.
- *
- *  Each callback is supplied with a parent directory handle, character string
- *  with the name of the current file path component, a flag indicating if this
- *  component is the last in the path and a pointer to an arbitrary object used
- *  for context.
- ******************************************************************************/
-
-/*
- * Callback used to determine if a file/directory exists in parent directory.
- *
- * Returns true if file path exists.
- */
 SA_FUNC bool sd_callback_path_exists(SdFile* parent_dir,
                                     const char* file_path_component,
                                     __attribute__((unused)) bool is_last_component,
@@ -253,12 +362,6 @@ SA_FUNC bool sd_callback_path_exists(SdFile* parent_dir,
 }
 
 
-/*
- * Callback used to create a directory in the parent directory if it does not
- * already exist.
- *
- * Returns true if a directory was created or it already existed.
- */
 SA_FUNC bool sd_callback_make_dir_path(SdFile* parent_dir,
                                       const char* file_path_component,
                                       bool is_last_component, void* object)
@@ -306,25 +409,6 @@ SA_FUNC bool sd_callback_rmdir(SdFile* parent_dir,
 }
 
 
-/*
- * Parse individual path components from a path.
- *
- * e.g. after repeated calls '/foo/bar/baz' will be split into 'foo', 'bar',
- * 'baz'.
- *
- * This is similar to `strtok()` but copies the component into the supplied
- * buffer rather than modifying the original string.
- *
- * `buffer` needs to be PATH_COMPONENT_BUFFER_LEN in size.
- *
- * `p_offset` needs to point to an integer of the offset at which the previous
- * path component finished.
- *
- * Returns `true` if more components remain.
- *
- * Returns `false` if this is the last component. (This means path ended with
- * 'foo' or 'foo/'.)
- */
 SA_FUNC bool get_next_path_component(const char* path, unsigned int* p_offset,
                                     char* buffer)
 {
@@ -359,32 +443,8 @@ SA_FUNC bool get_next_path_component(const char* path, unsigned int* p_offset,
 }
 
 
-/*
- * When given a file path (and parent directory--normally root), this function
- * traverses the directories in the path and at each level calls the supplied
- * callback function while also providing the supplied object for context if
- * required.
- *
- * e.g. given the path '/foo/bar/baz' the callback would be called at the
- * equivalent of '/foo', '/foo/bar' and '/foo/bar/baz'.
- *
- * The implementation swaps between two different directory/file handles as it
- * traverses the directories and does not use recursion in an attempt to use
- * memory efficiently.
- *
- * If a callback wishes to stop the directory traversal it should return
- * false--in this case the function will stop the traversal, tidy up and return
- * false.
- *
- * If a directory path doesn't exist at some point this function will also
- * return false and not subsequently call the callback.
- *
- * If a directory path specified is complete, valid and the callback did not
- * indicate the traversal should be interrupted then this function will return
- * true.
- */
 SA_FUNC bool sd_walk_path(const char* filepath, SdFile* parent_dir,
-                          sd_callback_f callback, void* object)
+                          SdWalkPathFunc callback, void* object)
 {
     SdFile subfile1;
     SdFile subfile2;
@@ -450,24 +510,18 @@ SA_FUNC bool sd_walk_path(const char* filepath, SdFile* parent_dir,
 }
 
 
-/* Returns true if the supplied file path exists in the given dir. */
 SA_INLINE bool sd_exists_in_dir(SdFile* dir, const char* filepath)
 {
     return sd_walk_path(filepath, dir, sd_callback_path_exists, NULL);
 }
 
 
-/* Returns true if the supplied file path exists. */
 SA_INLINE bool sd_exists(SdClass* sd, const char* filepath)
 {
     return sd_exists_in_dir(&sd->root, filepath);
 }
 
 
-/*
- * Makes a single directory or a heirarchy of directories. A rough equivalent
- * to `mkdir -p`.
- */
 SA_INLINE bool sd_mkdir(SdClass* sd, const char* filepath)
 {
     return sd_walk_path(filepath, &sd->root, sd_callback_make_dir_path, NULL);
